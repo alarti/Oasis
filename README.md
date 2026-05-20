@@ -5,6 +5,7 @@
 Oasis es una aplicación nativa de Android diseñada con **Jetpack Compose** que busca transformar tus momentos de estrés laboral en pequeños oasis de serenidad. Mediante una guía visual de respiración rítmica y reflexiones profundas sobre la vida y el descanso, Oasis te invita a pausar, respirar y reconectar con el presente.
 
 Este proyecto ha sido diseñado bajo una atmósfera visual de alta gama ("Sophisticated Dark"), que proporciona una paz y tranquilidad inmediatas desde el momento de abrir la aplicación.
+
 <img width="320" height="714" alt="image" src="https://github.com/user-attachments/assets/8e713f43-2d43-4fa8-9ebf-e3fa8bf8df06" />
 
 
