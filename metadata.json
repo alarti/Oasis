@@ -1,0 +1,6 @@
+{
+  "name": "Oasis",
+  "description": "Un refugio de paz para respirar, sonreír y desconectar del trabajo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
