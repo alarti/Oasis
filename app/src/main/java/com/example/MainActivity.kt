@@ -874,20 +874,19 @@ fun OasisScreen() {
                                     Spacer(modifier = Modifier.height(18.dp))
                                     
                                     // Audio Synthesizer Controller for Escape mode
-                                    if (generatedImage == null) {
-                                        ZenMusicPlayerCard(
-                                            isPlaying = isZenMusicPlaying,
-                                            onToggle = { turnOn ->
-                                                isZenMusicPlaying = turnOn
-                                                if (turnOn) {
-                                                    ZenSoundEngine.start("SIMPLE")
-                                                } else {
-                                                    ZenSoundEngine.stop()
-                                                }
+                                    ZenMusicPlayerCard(
+                                        isPlaying = isZenMusicPlaying,
+                                        onToggle = { turnOn ->
+                                            isZenMusicPlaying = turnOn
+                                            if (turnOn) {
+                                                ZenSoundEngine.start("SIMPLE")
+                                            } else {
+                                                ZenSoundEngine.stop()
                                             }
-                                        )
-                                        Spacer(modifier = Modifier.height(18.dp))
-                                    }
+                                        }
+                                    )
+                                    Spacer(modifier = Modifier.height(18.dp))
+
                                 }
 
                                 // Preset Sanctuaries Choose Title
@@ -1063,11 +1062,51 @@ fun OasisScreen() {
                                             focusManager.clearFocus()
                                             coroutineScope.launch {
                                                 isGeneratingImage = true
-                                                delay(2500)
-                                                if (stressInput.isNotEmpty()) {
-                                                    imageMessage = "Tu carga de estrés, '${stressInput}', se disipa en ondas de luz."
+                                                val promptMsg = if (stressInput.isNotEmpty()) {
+                                                    "A soothing, abstract wave of gentle light and color, dissolving stress represented by: ${stressInput}. Soft pastel gradient, high quality relaxing image."
+                                                } else {
+                                                    "A highly relaxing, abstract zen composition of soft light waves and calmness."
                                                 }
-                                                generatedImage = null
+
+                                                try {
+                                                    val request = com.example.api.GenerateContentRequest(
+                                                        contents = listOf(com.example.api.Content(
+                                                            parts = listOf(com.example.api.Part(text = promptMsg))
+                                                        )),
+                                                        generationConfig = com.example.api.GenerationConfig(
+                                                            imageConfig = com.example.api.ImageConfig(aspectRatio = "1:1", imageSize = "1K"),
+                                                            responseModalities = listOf("TEXT", "IMAGE")
+                                                        )
+                                                    )
+                                                    val response = com.example.api.RetrofitClient.geminiApi.generateImage(
+                                                        apiKey = com.example.BuildConfig.GEMINI_API_KEY,
+                                                        request = request
+                                                    )
+                                                    val parts = response.candidates.firstOrNull()?.content?.parts
+                                                    val imgPart = parts?.find { it.inlineData != null }
+                                                    val base64Data = imgPart?.inlineData?.data
+                                                    if (base64Data != null) {
+                                                        val imageBytes = android.util.Base64.decode(base64Data, android.util.Base64.DEFAULT)
+                                                        generatedImage = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                                                        imageMessage = if (stressInput.isNotEmpty()) {
+                                                            "Tu carga de estrés, '${stressInput}', se disipa en ondas de luz."
+                                                        } else {
+                                                            "Ondas de luz y calma."
+                                                        }
+                                                    } else {
+                                                        generatedImage = null
+                                                        imageMessage = "La imagen tardó o generó un error."
+                                                    }
+                                                } catch (e: Exception) {
+                                                    e.printStackTrace()
+                                                    generatedImage = null
+                                                    if (stressInput.isNotEmpty()) {
+                                                        imageMessage = "Tu carga de estrés, '${stressInput}', se disipa en ondas de luz."
+                                                    } else {
+                                                        imageMessage = "Error en la conexión. Relájate e inténtalo de nuevo."
+                                                    }
+                                                }
+
                                                 isGeneratingImage = false
                                                 
                                                 isZenMusicPlaying = true
