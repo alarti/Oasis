@@ -60,6 +60,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.*
+import com.example.sound.ZenSoundEngine
 import com.example.ui.theme.MyApplicationTheme
 import com.example.viewmodel.*
 import kotlinx.coroutines.Dispatchers
@@ -104,6 +105,15 @@ fun OasisScreen() {
 
     // ViewModel implementation for centralized robust state management (M3 mandate)
     val viewModel: OasisViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+
+    // Zen Sound state
+    var isZenMusicPlaying by remember { mutableStateOf(ZenSoundEngine.isPlaying()) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            ZenSoundEngine.stop()
+        }
+    }
 
     // IA / Demo Mode State
     var isDemoMode by remember { mutableStateOf(true) }
@@ -517,6 +527,20 @@ fun OasisScreen() {
                                             Text("DETENER PRÁCTICA", fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
                                         }
                                     } else {
+                                        ZenMusicPlayerCard(
+                                            isPlaying = isZenMusicPlaying,
+                                            onToggle = { turnOn ->
+                                                isZenMusicPlaying = turnOn
+                                                if (turnOn) {
+                                                    ZenSoundEngine.start()
+                                                } else {
+                                                    ZenSoundEngine.stop()
+                                                }
+                                            }
+                                        )
+
+                                        Spacer(modifier = Modifier.height(16.dp))
+
                                         // Configure practice parameters
                                         Text(
                                             text = "Técnica de respiración:",
@@ -674,7 +698,7 @@ fun OasisScreen() {
                                             .padding(horizontal = 16.dp, vertical = 6.dp)
                                     ) {
                                         Text(
-                                            text = if (isDemoMode) "SIMULACIÓN LOCAL" else "ORÁCULO VISUAL ACTIVO",
+                                            text = "SANTUARIO VISUAL LOCAL",
                                             color = Color(0xFF80DEEA),
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold,
@@ -1753,4 +1777,126 @@ fun CalmVideoPlayer() {
             }
         }
     )
+}
+
+@Composable
+fun ZenMusicPlayerCard(isPlaying: Boolean, onToggle: (Boolean) -> Unit) {
+    val infiniteTransition = rememberInfiniteTransition(label = "audioWave")
+    
+    val h1 by infiniteTransition.animateFloat(
+        initialValue = 4f,
+        targetValue = 24f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(450, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "w1"
+    )
+    val h2 by infiniteTransition.animateFloat(
+        initialValue = 6f,
+        targetValue = 18f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(300, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "w2"
+    )
+    val h3 by infiniteTransition.animateFloat(
+        initialValue = 8f,
+        targetValue = 28f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(550, easing = FastOutLinearInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "w3"
+    )
+    val h4 by infiniteTransition.animateFloat(
+        initialValue = 3f,
+        targetValue = 16f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(400, delayMillis = 100, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "w4"
+    )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF16181C)),
+        shape = RoundedCornerShape(24.dp),
+        border = BorderStroke(1.dp, if (isPlaying) Color(0xFF80DEEA) else Color(0xFF2C2F36))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(
+                            if (isPlaying) Color(0xFF80DEEA).copy(alpha = 0.15f) else Color(0xFF23252E),
+                            CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isPlaying) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(3.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(modifier = Modifier.size(width = 3.dp, height = h1.dp).background(Color(0xFF80DEEA), RoundedCornerShape(1.dp)))
+                            Box(modifier = Modifier.size(width = 3.dp, height = h2.dp).background(Color(0xFFD0BCFF), RoundedCornerShape(1.dp)))
+                            Box(modifier = Modifier.size(width = 3.dp, height = h3.dp).background(Color(0xFFF06292), RoundedCornerShape(1.dp)))
+                            Box(modifier = Modifier.size(width = 3.dp, height = h4.dp).background(Color(0xFF80DEEA), RoundedCornerShape(1.dp)))
+                        }
+                    } else {
+                        Text("🎶", fontSize = 18.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                Column {
+                    Text(
+                        text = "Frecuencia de Sanación 432Hz",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = if (isPlaying) "Ondas Theta + Campanas Zen activas" else "Binaural offline (toca para activar)",
+                        color = if (isPlaying) Color(0xFF80DEEA) else Color(0xFF94979F),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .size(width = 56.dp, height = 32.dp)
+                    .background(
+                        color = if (isPlaying) Color(0xFF80DEEA) else Color(0xFF2C2F36),
+                        shape = RoundedCornerShape(100.dp)
+                    )
+                    .clickable { onToggle(!isPlaying) }
+                    .padding(4.dp),
+                contentAlignment = if (isPlaying) Alignment.CenterEnd else Alignment.CenterStart
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .background(if (isPlaying) Color(0xFF0F1115) else Color(0xFF94979F), CircleShape)
+                )
+            }
+        }
+    }
 }
