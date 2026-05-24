@@ -59,7 +59,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.api.*
 import com.example.data.*
 import com.example.ui.theme.MyApplicationTheme
 import com.example.viewmodel.*
@@ -106,14 +105,8 @@ fun OasisScreen() {
     // ViewModel implementation for centralized robust state management (M3 mandate)
     val viewModel: OasisViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 
-    // API Key Configuration check
-    val rawApiKey = BuildConfig.GEMINI_API_KEY
-    val isApiKeyConfigured = remember(rawApiKey) {
-        rawApiKey.isNotEmpty() && rawApiKey != "MY_GEMINI_API_KEY" && !rawApiKey.startsWith("YOUR_")
-    }
-
     // IA / Demo Mode State
-    var isDemoMode by remember { mutableStateOf(!isApiKeyConfigured) }
+    var isDemoMode by remember { mutableStateOf(true) }
 
     // --- State: Escape (AI Image Gen) ---
     var stressInput by remember { mutableStateOf("") }
@@ -982,57 +975,11 @@ fun OasisScreen() {
                                             focusManager.clearFocus()
                                             coroutineScope.launch {
                                                 isGeneratingImage = true
-                                                if (isDemoMode) {
-                                                    delay(2500)
-                                                    if (stressInput.isNotEmpty()) {
-                                                        imageMessage = "Tu carga laboral de '${stressInput}' ha sido diluida bajo dunas infinitas de serenidad procedimental local."
-                                                    }
-                                                    generatedImage = null
-                                                } else {
-                                                    try {
-                                                        val finalStress = stressInput.ifEmpty { "Calma profunda y relajación mística" }
-                                                        
-                                                        // 1. Translation zen prompts creator
-                                                        val transPrompt = "Eres un sabio Zen y diseñador digital. Convierte este pesadumbre o estrés de trabajo ('$finalStress') en un prompt para la API de Imagen en inglés que describa un paisaje pacífico abstracto, místico, maderas vaporosas, acuarelas, orbes de luz suave, sin gente, sin rostros, sin palabras en la foto, hermoso y relajante. Responde únicamente con el prompt descriptivo en inglés."
-                                                        val textReq = GenerateTextRequest(
-                                                            contents = listOf(ContentText(parts = listOf(PartText(text = transPrompt))))
-                                                        )
-                                                        val textResp = withContext(Dispatchers.IO) {
-                                                            RetrofitClient.textService.generateText(BuildConfig.GEMINI_API_KEY, textReq)
-                                                        }
-                                                        val finalPr = textResp.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
-                                                            ?: "Extremely quiet abstract watercolor painting with glowing soft warm orbs and vaporous mountains indigo tones"
-
-                                                        translatedPromptUsed = finalPr
-
-                                                        // 2. Call image generator from gemini
-                                                        val imageReq = GenerateContentRequest(
-                                                            contents = listOf(Content(parts = listOf(Part(text = finalPr)))),
-                                                            generationConfig = GenerationConfig(
-                                                                imageConfig = ImageConfig("1:1", "1K"),
-                                                                responseModalities = listOf("TEXT", "IMAGE")
-                                                            )
-                                                        )
-                                                        val imgResp = withContext(Dispatchers.IO) {
-                                                            RetrofitClient.imageService.generateImage(BuildConfig.GEMINI_API_KEY, imageReq)
-                                                        }
-
-                                                        val b64 = imgResp.candidates?.firstOrNull()?.content?.parts?.firstOrNull { it.inlineData != null }?.inlineData?.data
-                                                        if (b64 != null) {
-                                                            val btm = decodeBase64ToBitmap(b64)
-                                                            if (btm != null) {
-                                                                generatedImage = btm
-                                                                imageMessage = "Tu oasis mental ha sido forjado con éxito."
-                                                            } else {
-                                                                imageMessage = "Se recibió la respuesta, pero ocurrió un problema al decodificar la imagen."
-                                                            }
-                                                        } else {
-                                                            imageMessage = "No se recibieron datos de imagen de la IA. Revisa tus cuotas o prueba el modo local."
-                                                        }
-                                                    } catch (e: Exception) {
-                                                        imageMessage = "Error de conexión IA: ${e.localizedMessage}. Utiliza el 'Modo Simulado' en Ajustes."
-                                                    }
+                                                delay(2500)
+                                                if (stressInput.isNotEmpty()) {
+                                                    imageMessage = "Tu carga laboral de '${stressInput}' ha sido diluida bajo dunas infinitas de serenidad procedimental local."
                                                 }
+                                                generatedImage = null
                                                 isGeneratingImage = false
                                             }
                                         },
@@ -1049,7 +996,7 @@ fun OasisScreen() {
                                             modifier = Modifier.padding(end = 8.dp)
                                         )
                                         Text(
-                                            text = if (isDemoMode) "SIMULAR SANTUARIO" else "GENERAR OASIS IA",
+                                            text = "PROYECTAR SANTUARIO VISUAL",
                                             fontWeight = FontWeight.Bold,
                                             letterSpacing = 1.sp
                                         )
@@ -1057,27 +1004,15 @@ fun OasisScreen() {
                                 }
 
                                 // Informative labels
-                                if (!isApiKeyConfigured) {
-                                    item {
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        Text(
-                                            text = "⚠️ Llave Gemini no configurada en AI Studio. Disfrutando del simulador local. Activa en Ajustes para conectar la IA del servidor.",
-                                            color = Color(0xFFFFB74D),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            textAlign = TextAlign.Center
-                                        )
-                                    }
-                                } else if (translatedPromptUsed.isNotEmpty()) {
-                                    item {
-                                        Spacer(modifier = Modifier.height(16.dp))
-                                        Text(
-                                            text = "Prompt Traducido IA: \"$translatedPromptUsed\"",
-                                            color = Color(0xFF94979F),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            textAlign = TextAlign.Center,
-                                            modifier = Modifier.padding(horizontal = 8.dp)
-                                        )
-                                    }
+                                item {
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = "Opciones Avanzadas de Calma Visual & Auditiva:",
+                                        color = Color(0xFF94979F),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        modifier = Modifier.padding(bottom = 8.dp)
+                                    )
+                                    CalmVideoPlayer()
                                 }
                             }
                         }
@@ -1226,31 +1161,16 @@ fun OasisScreen() {
                                     onClick = {
                                         coroutineScope.launch {
                                             isGeneratingMantra = true
-                                            if (isDemoMode) {
-                                                delay(1200)
-                                                val localMantras = listOf(
-                                                    "Afloja los hombros de inmediato. Todo lo que te pesa desaparecerá de todos modos. Eres libre.",
-                                                    "No eres una máquina de producción. Tienes pleno derecho de pausar y contemplar las luces.",
-                                                    "Hay una fuerza mística velando por ti. Suelta las riendas de tu control.",
-                                                    "Tu respiración sabe fluir sola. Disfruta de este segundo exacto de respiración.",
-                                                    "La paz no es el destino, es tu estado nativo cuando desconectas la prisa.",
-                                                    "Tacha de tu mente la tarea del mañana. El mañana no existe en este espacio de aire."
-                                                )
-                                                generatedMantra = localMantras.random()
-                                            } else {
-                                                try {
-                                                    val request = GenerateTextRequest(
-                                                        contents = listOf(ContentText(parts = listOf(PartText(text = "Escribe una reflexión corta y trascendental (máximo 20 palabras) en español, poética, inspirada en la paz zen y en aliviar el estrés laboral diciéndole al usuario que detenga su afán y respire. Devuelve únicamente la reflexión sin rodeos."))))
-                                                    )
-                                                    val response = withContext(Dispatchers.IO) {
-                                                        RetrofitClient.textService.generateText(BuildConfig.GEMINI_API_KEY, request)
-                                                    }
-                                                    generatedMantra = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
-                                                        ?: "La calma ya reside en ti. Solo debes detener el paso acelerado."
-                                                } catch (e: Exception) {
-                                                    generatedMantra = "Paz mística: siente cómo fluye el oxígeno en tu pecho. El trabajo puede esperar un instante."
-                                                }
-                                            }
+                                            delay(1200)
+                                            val localMantras = listOf(
+                                                "Afloja los hombros de inmediato. Todo lo que te pesa desaparecerá de todos modos. Eres libre.",
+                                                "No eres una máquina de producción. Tienes pleno derecho de pausar y contemplar las luces.",
+                                                "Hay una fuerza mística velando por ti. Suelta las riendas de tu control.",
+                                                "Tu respiración sabe fluir sola. Disfruta de este segundo exacto de respiración.",
+                                                "La paz no es el destino, es tu estado nativo cuando desconectas la prisa.",
+                                                "Tacha de tu mente la tarea del mañana. El mañana no existe en este espacio de aire."
+                                            )
+                                            generatedMantra = localMantras.random()
                                             isGeneratingMantra = false
                                         }
                                     },
@@ -1505,39 +1425,6 @@ fun OasisScreen() {
                                                 )
                                             }
 
-                                            Spacer(modifier = Modifier.height(16.dp))
-                                            Divider(color = Color(0xFF2C2F36))
-                                            Spacer(modifier = Modifier.height(16.dp))
-
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Column(modifier = Modifier.weight(1f)) {
-                                                    Text(
-                                                        text = "✨ Modo de Simulación de IA",
-                                                        color = Color.White,
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        fontWeight = FontWeight.Bold
-                                                    )
-                                                    Text(
-                                                        text = "Utiliza el motor simulado fuera de línea con hermosas metáforas locales en lugar del servidor.",
-                                                        color = Color(0xFF94979F),
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        lineHeight = 16.sp
-                                                    )
-                                                }
-                                                Spacer(modifier = Modifier.width(10.dp))
-                                                Switch(
-                                                    checked = isDemoMode,
-                                                    onCheckedChange = { isDemoMode = it },
-                                                    colors = SwitchDefaults.colors(
-                                                        checkedThumbColor = Color(0xFFD0BCFF),
-                                                        checkedTrackColor = Color(0xFF49454F)
-                                                    )
-                                                )
-                                            }
                                         }
                                     }
                                 }
@@ -1840,12 +1727,30 @@ fun StatCard(
     }
 }
 
-// Decodes standard Base64 response strings back into interactive Android Bitmaps
-fun decodeBase64ToBitmap(base64Str: String): Bitmap? {
-    return try {
-        val decodedBytes = Base64.decode(base64Str, Base64.DEFAULT)
-        BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-    } catch (e: Exception) {
-        null
-    }
+// Embeds a looping Lofi/Rain YouTube stream to provide calming audio/video without need for internal heavy ExoPlayer implementations
+@Composable
+fun CalmVideoPlayer() {
+    androidx.compose.ui.viewinterop.AndroidView(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(220.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .border(1.dp, Color(0xFF2C2F36), RoundedCornerShape(16.dp)),
+        factory = { ctx ->
+            android.webkit.WebView(ctx).apply {
+                settings.javaScriptEnabled = true
+                webChromeClient = android.webkit.WebChromeClient()
+                // Embed "Lofi chill" radio or a rain sound video. 
+                // ID jfKfPfyJRdk is a widely known 24/7 Lofi Radio on youtube.
+                val htmlData = """
+                    <html><body style="margin:0;padding:0;background-color:#0A0C0E;">
+                    <iframe width="100%" height="100%" 
+                    src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&loop=1&playlist=jfKfPfyJRdk&controls=1" 
+                    frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                    </body></html>
+                """.trimIndent()
+                loadDataWithBaseURL("https://www.youtube.com", htmlData, "text/html", "utf-8", null)
+            }
+        }
+    )
 }
